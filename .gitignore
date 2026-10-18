@@ -1,0 +1,15 @@
+node_modules/
+dist/
+exports/
+.env
+*.log
+.history/
+.DS_Store
+private/
+coverage/
+.scannerwork/
+.env.*
+!.env.example
+
+# refreshed Instagram tokens
+*.token.json
