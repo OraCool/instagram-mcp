@@ -70,6 +70,12 @@ export class TokenStore {
     return state.access_token;
   }
 
+  /** Stores a token obtained by `instagram-mcp login`; it replaces IG_ACCESS_TOKEN from now on. */
+  async save(state: TokenState): Promise<void> {
+    if (this.cachePath) await writeCache(this.cachePath, state);
+    this.current = { source: this.cachePath ? "cache" : "env", state };
+  }
+
   async refresh(): Promise<TokenState> {
     const { state } = await this.info();
     const url = new URL(`${GRAPH_HOST}/refresh_access_token`);
@@ -96,8 +102,7 @@ export class TokenStore {
       obtained_at: now.toISOString(),
       expires_at: data.expires_in ? new Date(now.getTime() + data.expires_in * 1000).toISOString() : undefined,
     };
-    if (this.cachePath) await writeCache(this.cachePath, next);
-    this.current = { source: this.cachePath ? "cache" : "env", state: next };
+    await this.save(next);
     return next;
   }
 }

@@ -7,10 +7,12 @@ import { createContext } from "../src/tools/context.js";
 import { fakeGraph, ME, type Handler } from "./fakeGraph.js";
 
 const IG = ME.user_id;
+// Never read a real token cache from the home directory.
+const NO_CACHE = { IG_TOKEN_CACHE_PATH: "/nonexistent/instagram-mcp/token.json" };
 
 async function connect(routes: Record<string, Handler>, env: Record<string, string> = {}) {
   const graph = fakeGraph({ "GET /me": () => ME, ...routes });
-  const ctx = createContext(loadConfig({ IG_ACCESS_TOKEN: "tok", ...env }), { fetchImpl: graph.fetchImpl, sleep: async () => {} });
+  const ctx = createContext(loadConfig({ IG_ACCESS_TOKEN: "tok", ...NO_CACHE, ...env }), { fetchImpl: graph.fetchImpl, sleep: async () => {} });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await createServer(ctx).connect(serverTransport);
   const client = new Client({ name: "test", version: "0" });
@@ -51,7 +53,7 @@ describe("server", () => {
 
   it("returns a tool error instead of crashing when the token is missing", async () => {
     const graph = fakeGraph({});
-    const ctx = createContext(loadConfig({}), { fetchImpl: graph.fetchImpl });
+    const ctx = createContext(loadConfig(NO_CACHE), { fetchImpl: graph.fetchImpl });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await createServer(ctx).connect(serverTransport);
     const client = new Client({ name: "test", version: "0" });

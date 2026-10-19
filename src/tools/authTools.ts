@@ -26,7 +26,7 @@ export function registerAuthTools(server: McpServer, ctx: ToolContext) {
         obtained_at: state.obtained_at,
         expires_at: state.expires_at ?? "unknown (token from IG_ACCESS_TOKEN; long-lived tokens last 60 days from issue)",
         days_left: daysLeft,
-        token_cache: ctx.config.tokenCachePath ?? null,
+        token_cache: ctx.config.tokenCachePath,
         writes_enabled: ctx.config.writesEnabled,
       });
     }),
@@ -38,7 +38,7 @@ export function registerAuthTools(server: McpServer, ctx: ToolContext) {
       title: "Refresh Instagram token",
       description:
         "Refreshes the long-lived access token for another 60 days (the token must be at least 24 hours old and not expired). " +
-        "The new token is saved to IG_TOKEN_CACHE_PATH; without it the new token only lives until the server restarts.",
+        "The new token is saved to the token cache file (IG_TOKEN_CACHE_PATH, default ~/.config/instagram-mcp/token.json).",
       inputSchema: {},
       annotations: WRITES,
     },
@@ -47,10 +47,7 @@ export function registerAuthTools(server: McpServer, ctx: ToolContext) {
       return jsonResult({
         refreshed: true,
         expires_at: next.expires_at,
-        saved_to: ctx.config.tokenCachePath ?? null,
-        ...(!ctx.config.tokenCachePath && {
-          warning: "IG_TOKEN_CACHE_PATH is not set: update IG_ACCESS_TOKEN manually before the old token expires.",
-        }),
+        saved_to: ctx.config.tokenCachePath,
       });
     }),
   );

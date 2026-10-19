@@ -13,3 +13,6 @@ coverage/
 
 # refreshed Instagram tokens
 *.token.json
+
+# wrangler local state
+.wrangler/

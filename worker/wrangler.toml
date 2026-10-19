@@ -1,0 +1,7 @@
+name = "instagram-mcp-auth"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Your Meta app's Instagram App ID (public). The secret is set with: npx wrangler secret put IG_APP_SECRET
+IG_APP_ID = ""

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>instagram-mcp login</title>
+<style>
+  :root { --bg: #fff; --fg: #1d1d1f; --muted: #6e6e73; --box: #f2f2f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111; --fg: #f2f2f2; --muted: #a1a1a6; --box: #222; } }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 3rem 1rem; }
+  main { max-width: 36rem; margin: 0 auto; }
+  code { display: block; background: var(--box); padding: .75rem; border-radius: 8px; word-break: break-all; }
+  .muted { color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>instagram-mcp login</h1>
+  <p id="status">Finishing login…</p>
+  <div id="fallback" hidden>
+    <p>If the terminal is still waiting, copy this code and paste it there:</p>
+    <code id="code"></code>
+  </div>
+  <p class="muted">This page only passes the one-time code from Instagram to the <code style="display:inline;padding:0 .2rem">instagram-mcp login</code>
+    command running on your computer. Nothing is stored or sent anywhere else.</p>
+</main>
+<script>
+  // Redirect target for option 1 (your own Meta app): Instagram sends ?code&state here; state carries the port and
+  // nonce of the local login command, which exchanges the code with your app secret on your machine.
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var status = document.getElementById("status");
+    var code = (q.get("code") || "").replace(/#_?$/, "");
+    var error = q.get("error");
+    var state;
+    try { state = JSON.parse(atob((q.get("state") || "").replace(/-/g, "+").replace(/_/g, "/"))); } catch (e) {}
+    var valid = state && Number.isInteger(state.p) && state.p >= 1024 && state.p <= 65535 && /^[0-9a-f]{32}$/.test(state.n);
+    history.replaceState(null, "", location.pathname); // keep the code out of browser history
+
+    if (!code && !error) { status.textContent = "No login code in this link. Start with the instagram-mcp login command."; return; }
+    if (error) status.textContent = "Login was cancelled: " + (q.get("error_description") || error);
+    if (code) {
+      document.getElementById("code").textContent = code;
+      document.getElementById("fallback").hidden = false;
+    }
+    if (!valid) { if (code) status.textContent = "Login code received."; return; }
+
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = "http://127.0.0.1:" + state.p + "/callback";
+    var fields = { nonce: state.n };
+    if (code) fields.code = code;
+    if (error) { fields.error = error; fields.error_description = q.get("error_description") || error; }
+    Object.keys(fields).forEach(function (name) {
+      var input = document.createElement("input");
+      input.type = "hidden"; input.name = name; input.value = fields[name];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  })();
+</script>
+</body>
+</html>

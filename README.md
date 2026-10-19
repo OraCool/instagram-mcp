@@ -39,15 +39,22 @@ MCP server for the [Instagram API with Instagram Login](https://developers.faceb
 
 ## Setup
 
-Creating the Meta app and getting a token: **[docs/credentials.md](docs/credentials.md)**.
+Requires Node.js 20+ and an Instagram Business or Creator account. Three ways to get a token — details in
+**[docs/credentials.md](docs/credentials.md)**:
 
-Requires Node.js 20+. Register with Claude Code:
+- **Paste a token** from your own Meta app's dashboard into `IG_ACCESS_TOKEN`.
+- **Option 1 — `login` with your own app:**
+  `IG_APP_ID=... IG_APP_SECRET=... npx -y github:OraCool/instagram-mcp login`
+- **Option 2 — `login` through an app owner's login server** ([worker/](worker/README.md), Cloudflare Worker), for
+  team members/clients added to that app: `IG_AUTH_SERVER=https://... npx -y github:OraCool/instagram-mcp login`
+
+`login` saves the token to `~/.config/instagram-mcp/token.json`, which the server picks up automatically.
+
+Register with Claude Code:
 
 ```bash
-claude mcp add instagram \
-  -e IG_ACCESS_TOKEN=IGAA... \
-  -e IG_TOKEN_CACHE_PATH=$HOME/.config/instagram-mcp/ig.token.json \
-  -- npx -y github:OraCool/instagram-mcp
+claude mcp add instagram -- npx -y github:OraCool/instagram-mcp            # after `login`
+claude mcp add instagram -e IG_ACCESS_TOKEN=IGAA... -- npx -y github:OraCool/instagram-mcp   # pasted token
 ```
 
 Claude Desktop (`claude_desktop_config.json`):
@@ -59,8 +66,6 @@ Claude Desktop (`claude_desktop_config.json`):
       "command": "npx",
       "args": ["-y", "github:OraCool/instagram-mcp"],
       "env": {
-        "IG_ACCESS_TOKEN": "IGAA...",
-        "IG_TOKEN_CACHE_PATH": "/Users/you/.config/instagram-mcp/ig.token.json",
         "IG_ENABLE_WRITES": "false"
       }
     }
@@ -74,10 +79,13 @@ From a clone: `npm install && npm run build`, then use `node /path/to/instagram-
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `IG_ACCESS_TOKEN` | — | Long-lived Instagram User access token |
+| `IG_ACCESS_TOKEN` | — | Long-lived Instagram User access token (not needed after `login`) |
 | `IG_USER_ID` | from `GET /me` | Professional account id |
 | `IG_API_VERSION` | `v25.0` | Graph API version |
-| `IG_TOKEN_CACHE_PATH` | — | JSON file for refreshed tokens (takes precedence over `IG_ACCESS_TOKEN` once written) |
+| `IG_TOKEN_CACHE_PATH` | `~/.config/instagram-mcp/token.json` | Token saved by `login`/refresh; takes precedence over `IG_ACCESS_TOKEN` |
+| `IG_APP_ID`, `IG_APP_SECRET` | — | Option 1: your own Meta app, for `login` |
+| `IG_REDIRECT_URI` | `https://oracool.github.io/instagram-mcp/callback/` | Option 1: redirect URI registered in your app |
+| `IG_AUTH_SERVER` | — | Option 2: URL of a hosted login server (`worker/`) |
 | `IG_ENABLE_WRITES` | `false` | Allow publishing, comment moderation and sending DMs |
 
 ## Good to know

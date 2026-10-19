@@ -19,7 +19,12 @@ export function fakeGraph(routes: Record<string, Handler>) {
       method: init.method ?? "GET",
       path: url.pathname.replace(/^\/v\d+\.\d+/, ""),
       params: Object.fromEntries(url.searchParams),
-      body: init.body ? JSON.parse(String(init.body)) : undefined,
+      body:
+        init.body instanceof URLSearchParams
+          ? Object.fromEntries(init.body)
+          : init.body
+            ? JSON.parse(String(init.body))
+            : undefined,
       authorization: (init.headers as Record<string, string> | undefined)?.Authorization,
     };
     requests.push(req);
