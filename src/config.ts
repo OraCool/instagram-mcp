@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { z } from "zod";
 
 // Shared by the server and `instagram-mcp login`, so a login is picked up without extra configuration.
-export const DEFAULT_TOKEN_CACHE_PATH = join(homedir(), ".config", "instagram-mcp", "token.json");
+export const CONFIG_DIR = join(homedir(), ".config", "instagram-mcp");
+export const DEFAULT_TOKEN_CACHE_PATH = join(CONFIG_DIR, "token.json");
 // Static page (GitHub Pages of this repo) that hands the login code back to the local CLI; register it in your app.
 export const DEFAULT_REDIRECT_URI = "https://oracool.github.io/instagram-mcp/callback/";
 
@@ -18,6 +19,11 @@ const envSchema = z.object({
     .regex(/^v\d+\.\d+$/, 'Use a Graph API version such as "v25.0"')
     .default("v25.0"),
   IG_TOKEN_CACHE_PATH: optionalString,
+  // Several accounts: one server entry per account, each with its own IG_ACCOUNT → <name>.token.json.
+  IG_ACCOUNT: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() ? v.trim() : undefined),
+    z.string().regex(/^[\w.-]{1,64}$/, "IG_ACCOUNT may contain letters, digits, '.', '_' and '-'").optional(),
+  ),
   // Option 1 — login with your own Meta app (secret stays on this machine).
   IG_APP_ID: optionalString,
   IG_APP_SECRET: optionalString,
@@ -34,6 +40,7 @@ export interface Config {
   accessToken?: string;
   userId?: string;
   apiVersion: string;
+  account?: string;
   tokenCachePath: string;
   writesEnabled: boolean;
   app?: { appId: string; appSecret: string };
@@ -48,7 +55,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     accessToken: parsed.IG_ACCESS_TOKEN,
     userId: parsed.IG_USER_ID,
     apiVersion: parsed.IG_API_VERSION,
-    tokenCachePath: parsed.IG_TOKEN_CACHE_PATH ?? DEFAULT_TOKEN_CACHE_PATH,
+    account: parsed.IG_ACCOUNT,
+    tokenCachePath:
+      parsed.IG_TOKEN_CACHE_PATH ?? (parsed.IG_ACCOUNT ? join(CONFIG_DIR, `${parsed.IG_ACCOUNT}.token.json`) : DEFAULT_TOKEN_CACHE_PATH),
     writesEnabled: parsed.IG_ENABLE_WRITES,
     app: parsed.IG_APP_ID && parsed.IG_APP_SECRET ? { appId: parsed.IG_APP_ID, appSecret: parsed.IG_APP_SECRET } : undefined,
     redirectUri: parsed.IG_REDIRECT_URI ?? DEFAULT_REDIRECT_URI,

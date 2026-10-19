@@ -75,6 +75,23 @@ Claude Desktop (`claude_desktop_config.json`):
 
 From a clone: `npm install && npm run build`, then use `node /path/to/instagram-mcp/dist/index.js` as the command.
 
+## Several accounts
+
+Run one server entry per account. `IG_ACCOUNT` gives each its own token file
+(`~/.config/instagram-mcp/<name>.token.json`); `login` always asks which Instagram account to connect and prints the
+connected @username.
+
+```bash
+npx -y github:OraCool/instagram-mcp login --account brand.one     # log in as @brand.one
+npx -y github:OraCool/instagram-mcp login --account brand.two     # log in as @brand.two
+
+claude mcp add instagram-brand-one -s user -e IG_ACCOUNT=brand.one -- npx -y github:OraCool/instagram-mcp
+claude mcp add instagram-brand-two -s user -e IG_ACCOUNT=brand.two -- npx -y github:OraCool/instagram-mcp
+```
+
+Each account must be a professional account added to the Meta app (as an Instagram tester if you don't own it).
+Turn on `IG_ENABLE_WRITES` per entry only where posting is wanted.
+
 ## Configuration
 
 | Variable | Default | Meaning |
@@ -82,6 +99,7 @@ From a clone: `npm install && npm run build`, then use `node /path/to/instagram-
 | `IG_ACCESS_TOKEN` | — | Long-lived Instagram User access token (not needed after `login`) |
 | `IG_USER_ID` | from `GET /me` | Professional account id |
 | `IG_API_VERSION` | `v25.0` | Graph API version |
+| `IG_ACCOUNT` | — | Account name for several accounts: token file becomes `~/.config/instagram-mcp/<name>.token.json` |
 | `IG_TOKEN_CACHE_PATH` | `~/.config/instagram-mcp/token.json` | Token saved by `login`/refresh; takes precedence over `IG_ACCESS_TOKEN` |
 | `IG_APP_ID`, `IG_APP_SECRET` | — | Option 1: your own Meta app, for `login` |
 | `IG_REDIRECT_URI` | `https://oracool.github.io/instagram-mcp/callback/` | Option 1: redirect URI registered in your app |

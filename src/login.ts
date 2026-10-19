@@ -28,6 +28,7 @@ export interface LoginOptions {
 export interface LoginResult {
   mode: "app" | "server";
   user_id?: string;
+  username?: string;
   expires_at?: string;
   saved_to: string;
 }
@@ -98,7 +99,20 @@ export async function login(options: LoginOptions): Promise<LoginResult> {
     obtained_at: now.toISOString(),
     expires_at: expiresAt,
   });
-  return { mode, user_id: token.user_id, expires_at: expiresAt, saved_to: config.tokenCachePath };
+  return { mode, user_id: token.user_id, username: await whoAmI(config, token.access_token, fetchImpl), expires_at: expiresAt, saved_to: config.tokenCachePath };
+}
+
+/** The connected @username, so a login into the wrong account is noticed right away. Best effort. */
+async function whoAmI(config: Config, accessToken: string, fetchImpl: typeof fetch): Promise<string | undefined> {
+  try {
+    const response = await fetchImpl(`https://graph.instagram.com/${config.apiVersion}/me?fields=username`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    });
+    const me = (await response.json()) as { username?: string };
+    return response.ok ? me.username : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** One-off HTTP listener on 127.0.0.1 (random port) that accepts a single form POST carrying the expected nonce. */

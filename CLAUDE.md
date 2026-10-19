@@ -39,6 +39,9 @@ layout as the sibling `bepaid-mcp`.
   the listener; the code is exchanged locally. Option 2 (`IG_AUTH_SERVER`): the Cloudflare Worker signs `state`
   (HMAC with the app secret, 15 min), exchanges the code and form-POSTs the token to the listener. The listener only
   accepts its nonce. Tokens never go into URLs. `oauth.ts` must stay web-standard (no Node APIs): the Worker bundles it.
+- Several accounts = several server entries: `IG_ACCOUNT` → `~/.config/instagram-mcp/<name>.token.json`
+  (`login --account <name>`). `authorizeUrl` always sets `force_reauth=true` so a second login can't silently reuse
+  the browser's Instagram session; `login` prints the connected @username.
 - Token cache defaults to `~/.config/instagram-mcp/token.json` (`DEFAULT_TOKEN_CACHE_PATH`); tests must always pass
   an explicit `IG_TOKEN_CACHE_PATH` so a real login on the machine can't leak in.
 - The code exchange response has `user_id` as a JSON number > 2^53; `exchangeCode` quotes it before parsing.

@@ -30,6 +30,8 @@ export function authorizeUrl(appId: string, redirectUri: string, scopes: readonl
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", scopes.join(","));
   url.searchParams.set("state", state);
+  // Always ask which account to connect: otherwise a second login silently reuses the browser's Instagram session.
+  url.searchParams.set("force_reauth", "true");
   return url.toString();
 }
 

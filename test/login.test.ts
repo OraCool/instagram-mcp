@@ -17,6 +17,7 @@ const oauthApi = () =>
     "POST /oauth/access_token": () =>
       new Response('{"data":[{"access_token":"short","user_id":17841400000000001,"permissions":"instagram_business_basic"}]}'),
     "GET /access_token": () => ({ access_token: "long", token_type: "bearer", expires_in: 5_184_000 }),
+    "GET /me": () => ({ username: "demo.studio" }),
   });
 
 async function cachePath() {
@@ -58,11 +59,12 @@ describe("login (option 1: own app)", () => {
         // What docs/callback/index.html does with Instagram's redirect.
         const authorize = new URL(url);
         expect(authorize.searchParams.get("redirect_uri")).toBe("https://oracool.github.io/instagram-mcp/callback/");
+        expect(authorize.searchParams.get("force_reauth")).toBe("true");
         const state = JSON.parse(Buffer.from(authorize.searchParams.get("state")!, "base64url").toString());
         void fetch(`http://127.0.0.1:${state.p}/callback`, { method: "POST", body: new URLSearchParams({ nonce: state.n, code: "AQBx" }) });
       },
     });
-    expect(result).toMatchObject({ mode: "app", user_id: "17841400000000001", saved_to: path });
+    expect(result).toMatchObject({ mode: "app", user_id: "17841400000000001", username: "demo.studio", saved_to: path });
     expect(JSON.parse(await readFile(path, "utf8")).access_token).toBe("long");
   });
 
@@ -84,6 +86,15 @@ describe("login (option 1: own app)", () => {
 
   it("explains what to configure when there is no app or server", async () => {
     await expect(login({ config: loadConfig({}), log: () => {} })).rejects.toThrow(/IG_APP_ID.*IG_AUTH_SERVER/);
+  });
+});
+
+describe("several accounts", () => {
+  it("keeps one token file per IG_ACCOUNT", () => {
+    expect(loadConfig({ IG_ACCOUNT: "demo.studio" }).tokenCachePath).toMatch(/instagram-mcp\/demo\.studio\.token\.json$/);
+    expect(loadConfig({}).tokenCachePath).toMatch(/instagram-mcp\/token\.json$/);
+    expect(loadConfig({ IG_ACCOUNT: "x", IG_TOKEN_CACHE_PATH: "/tmp/own.json" }).tokenCachePath).toBe("/tmp/own.json");
+    expect(() => loadConfig({ IG_ACCOUNT: "../escape" })).toThrow(/IG_ACCOUNT/);
   });
 });
 
