@@ -167,6 +167,27 @@ describe("server", () => {
   });
 
   describe("comments and messages", () => {
+    it("explains an empty comment list when the media reports comments", async () => {
+      const { call } = await connect({
+        "GET /1790000000000001/comments": () => ({ data: [] }),
+        "GET /1790000000000001": () => ({ id: "1790000000000001", comments_count: 7 }),
+      });
+      const { json } = await call("ig_list_comments", { media_id: "1790000000000001" });
+      expect(json.count).toBe(0);
+      expect(json.comments_count).toBe(7);
+      expect(json.hint).toMatch(/development mode/);
+    });
+
+    it("lists comments without an extra request when some are returned", async () => {
+      const { call, requests } = await connect({
+        "GET /1790000000000001/comments": () => ({ data: [{ id: "1780000000000001", text: "Nice!", username: "visitor.one" }] }),
+      });
+      const { json } = await call("ig_list_comments", { media_id: "1790000000000001" });
+      expect(json.count).toBe(1);
+      expect(json.hint).toBeUndefined();
+      expect(requests.map((r) => r.path)).toEqual(["/1790000000000001/comments"]);
+    });
+
     it("hides a comment", async () => {
       const { call, requests } = await connect({ "POST /1780000000000001": () => ({ success: true }) }, writes);
       const { json } = await call("ig_hide_comment", { comment_id: "1780000000000001" });

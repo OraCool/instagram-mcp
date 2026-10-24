@@ -6,6 +6,12 @@ import { DESTRUCTIVE, READ_ONLY, WRITES, idInput, pagingShape, requireWrites } f
 
 const messageInput = z.string().trim().min(1).max(2200).describe("Comment text (Instagram captions/comments max 2200 chars)");
 
+// Meta answers 200 with an empty list (not a permission error) when it filters comments out.
+const EMPTY_COMMENTS_HINT =
+  "The media reports comments but none were returned. Check that instagram_business_manage_comments is added to " +
+  "the Meta app (log in again after adding it), and that the app is published: in development mode Meta hides " +
+  "comments from people without a role on the app.";
+
 export function registerCommentTools(server: McpServer, ctx: ToolContext) {
   server.registerTool(
     "ig_list_comments",
@@ -17,6 +23,10 @@ export function registerCommentTools(server: McpServer, ctx: ToolContext) {
     },
     safe(async ({ media_id, limit, after }) => {
       const { items, next_cursor } = await ctx.client.collect(`/${media_id}/comments`, { fields: COMMENT_FIELDS, after }, limit);
+      if (items.length === 0 && !after) {
+        const { comments_count } = await ctx.client.get<{ comments_count?: number }>(`/${media_id}`, { fields: "comments_count" });
+        if (comments_count) return jsonResult({ count: 0, comments_count, hint: EMPTY_COMMENTS_HINT, comments: items });
+      }
       return jsonResult({ count: items.length, next_cursor, comments: items });
     }),
   );
