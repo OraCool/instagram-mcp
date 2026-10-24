@@ -59,6 +59,16 @@ layout as the sibling `bepaid-mcp`.
 - Only the Instagram Login path (`graph.instagram.com`) is supported; Facebook-Login-only features (hashtag search,
   Business Discovery, ads) are out of scope.
 
+## Meta app behavior seen on a real account
+
+- A permission must be added to the app (App Review → Permissions and features, or the use case's Customize page)
+  before `login`; the consent screen still shows every requested scope, but the token only gets the added ones. Log in
+  again after adding one.
+- Missing access is silent: `/comments`, `/tags` and `/conversations` answer 200 with empty `data`, not an error.
+- While the app is unpublished (development mode), comments and DMs from people without a role on the app are
+  filtered out. Publishing without App Review (Standard Access) is enough for accounts added to the app.
+  `ig_list_comments` returns a `hint` when the list is empty but `comments_count` is not.
+
 ## Unverified details (check against a real account before relying on them)
 
 - DM image body: `message.attachment` (singular) is used; Meta's docs show both `attachment` and `attachments`.
